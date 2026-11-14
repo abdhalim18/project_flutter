@@ -8,6 +8,7 @@ import '../../products/application/product_providers.dart';
 import '../../products/domain/product.dart';
 import '../application/cart_provider.dart';
 import '../application/pos_providers.dart';
+import 'qty_stepper.dart';
 import 'sync_status_bar.dart';
 
 final _currencyFormat = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
@@ -125,12 +126,17 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                         itemCount: visible.length,
                         itemBuilder: (context, index) {
                           final product = visible[index];
+                          final qty = cartQtyByProduct[product.id] ?? 0;
+                          final cartNotifier = ref.read(cartProvider.notifier);
+                          // Tidak bisa menambah melebihi stok yang tercatat.
+                          final canAdd = qty < product.stockQty;
                           return _ProductTile(
                             product: product,
-                            qtyInCart: cartQtyByProduct[product.id] ?? 0,
-                            onTap: product.stockQty <= 0
-                                ? null
-                                : () => ref.read(cartProvider.notifier).addProduct(product),
+                            qtyInCart: qty,
+                            onAdd: canAdd ? () => cartNotifier.addProduct(product) : null,
+                            onRemove: qty > 0
+                                ? () => cartNotifier.updateQty(product.id, qty - 1)
+                                : null,
                           );
                         },
                       ),
@@ -157,11 +163,17 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 }
 
 class _ProductTile extends StatelessWidget {
-  const _ProductTile({required this.product, required this.qtyInCart, required this.onTap});
+  const _ProductTile({
+    required this.product,
+    required this.qtyInCart,
+    required this.onAdd,
+    required this.onRemove,
+  });
 
   final Product product;
   final int qtyInCart;
-  final VoidCallback? onTap;
+  final VoidCallback? onAdd;
+  final VoidCallback? onRemove;
 
   @override
   Widget build(BuildContext context) {
@@ -170,8 +182,17 @@ class _ProductTile extends StatelessWidget {
     final placeholderColor = theme.colorScheme.surfaceContainerHighest;
 
     return Card(
+      // Kartu yang sudah ada di keranjang diberi garis tepi warna utama
+      // (sudut 16 sama dengan cardTheme di AppTheme).
+      shape: qtyInCart > 0
+          ? RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: theme.colorScheme.primary, width: 2),
+            )
+          : null,
       child: InkWell(
-        onTap: onTap,
+        // Mengetuk kartu tetap menambah satu, sama seperti tombol +.
+        onTap: onAdd,
         child: Opacity(
           opacity: outOfStock ? 0.55 : 1,
           child: Column(
@@ -199,23 +220,11 @@ class _ProductTile extends StatelessWidget {
                               child: Icon(Icons.broken_image_outlined, color: theme.colorScheme.onSurfaceVariant),
                             ),
                           ),
-                    if (qtyInCart > 0)
-                      Positioned(
-                        top: 6,
-                        right: 6,
-                        child: CircleAvatar(
-                          radius: 12,
-                          backgroundColor: theme.colorScheme.primary,
-                          child: Text(
-                            '$qtyInCart',
-                            style: TextStyle(
-                              color: theme.colorScheme.onPrimary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
+                    Positioned(
+                      right: 6,
+                      bottom: 6,
+                      child: QtyStepper(qty: qtyInCart, onAdd: onAdd, onRemove: onRemove),
+                    ),
                   ],
                 ),
               ),
