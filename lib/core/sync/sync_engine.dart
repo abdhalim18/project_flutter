@@ -97,6 +97,17 @@ class SyncEngine {
     }
   }
 
+  /// Tries to send [transactionId] right away (along with anything else that
+  /// is due) and reports whether it reached the server. Used right after
+  /// checkout so the cashier is told whether the sale was sent or is queued.
+  Future<bool> trySyncNow(String transactionId) async {
+    await syncPendingTransactions();
+    final row = await (_db.select(
+      _db.transactions,
+    )..where((t) => t.id.equals(transactionId))).getSingleOrNull();
+    return row?.syncState == 'synced';
+  }
+
   /// Sends one transaction with its items and stock movements in a single
   /// request; the server writes them in one database transaction. Every row
   /// uses its client-generated UUID with ON CONFLICT DO NOTHING server-side,

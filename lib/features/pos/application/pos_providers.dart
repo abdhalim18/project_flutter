@@ -14,7 +14,15 @@ final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
 
 final connectivityServiceProvider = Provider<ConnectivityService>((ref) => ConnectivityService());
 
-final syncEngineProvider = Provider<SyncEngine>((ref) {
+/// Whether the device has a network connection (Wi-Fi, mobile data, ...),
+/// starting from the current state and then following changes.
+final isOnlineProvider = StreamProvider<bool>((ref) async* {
+  final connectivity = ref.watch(connectivityServiceProvider);
+  yield await connectivity.checkIsOnline();
+  yield* connectivity.onConnectivityChanged;
+});
+
+final syncEngineProvider =Provider<SyncEngine>((ref) {
   return SyncEngine(ref.watch(appDatabaseProvider), ref.watch(pullSyncServiceProvider));
 });
 

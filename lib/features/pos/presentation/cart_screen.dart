@@ -14,6 +14,28 @@ final _currencyFormat = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', de
 
 const _paymentMethods = ['cash', 'qris', 'debit'];
 
+SnackBar _checkoutSnackBar(String transactionId, {required bool sent}) {
+  final shortId = transactionId.substring(0, 8);
+  return SnackBar(
+    duration: Duration(seconds: sent ? 3 : 6),
+    backgroundColor: sent ? Colors.green.shade700 : Colors.orange.shade800,
+    content: Row(
+      children: [
+        Icon(sent ? Icons.cloud_done_outlined : Icons.cloud_off_outlined, color: Colors.white),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            sent
+                ? 'Transaksi tersimpan dan terkirim ($shortId)'
+                : 'Transaksi tersimpan di HP ($shortId). Belum terkirim, '
+                      'akan dikirim otomatis saat online.',
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 class CartScreen extends ConsumerStatefulWidget {
   const CartScreen({super.key});
 
@@ -60,15 +82,26 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           );
 
       ref.read(cartProvider.notifier).clear();
-      // Best-effort immediate push; if offline this just leaves the
-      // transaction queued and the connectivity listener retries later.
-      unawaited(ref.read(syncEngineProvider).syncPendingTransactions());
+
+      // The sale is already safe on the device. Try to send it now so the
+      // cashier knows whether it reached the server; when offline (or the
+      // server is slow) it stays queued and the auto-sync retries later.
+      final syncEngine = ref.read(syncEngineProvider);
+      final isOnline = await ref.read(connectivityServiceProvider).checkIsOnline();
+      var sent = false;
+      if (isOnline) {
+        sent = await syncEngine
+            .trySyncNow(transactionId)
+            .timeout(const Duration(seconds: 5), onTimeout: () => false)
+            .catchError((Object _) => false);
+      } else {
+        unawaited(syncEngine.syncPendingTransactions().catchError((Object _) {}));
+      }
 
       if (mounted) {
+        final messenger = ScaffoldMessenger.of(context);
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Transaksi tersimpan (${transactionId.substring(0, 8)})')),
-        );
+        messenger.showSnackBar(_checkoutSnackBar(transactionId, sent: sent));
       }
     } catch (e) {
       setState(() => _errorMessage = 'Gagal checkout: $e');
