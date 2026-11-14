@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/auth/auth_providers.dart';
+import '../../../core/format/rupiah_input.dart';
 import '../application/cart_provider.dart';
 import '../application/pos_providers.dart';
 
@@ -34,8 +35,9 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     super.dispose();
   }
 
-  double get _discount => double.tryParse(_discountController.text) ?? 0;
-  double get _paymentReceived => double.tryParse(_paymentReceivedController.text) ?? 0;
+  // Isian memakai titik pemisah ribuan ("50.000"), jadi dibaca lewat parseRupiah.
+  double get _discount => parseRupiah(_discountController.text).toDouble();
+  double get _paymentReceived => parseRupiah(_paymentReceivedController.text).toDouble();
 
   Future<void> _checkout(double total) async {
     setState(() {
@@ -134,7 +136,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                 TextField(
                   controller: _discountController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Diskon (Rp)'),
+                  inputFormatters: const [RupiahInputFormatter()],
+                  decoration: const InputDecoration(labelText: 'Diskon', prefixText: 'Rp '),
                   onChanged: (_) => setState(() {}),
                 ),
                 const SizedBox(height: 16),
@@ -156,7 +159,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                   TextField(
                     controller: _paymentReceivedController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Uang Diterima (Rp)'),
+                    inputFormatters: const [RupiahInputFormatter()],
+                    decoration: const InputDecoration(labelText: 'Uang Diterima', prefixText: 'Rp '),
                     onChanged: (_) => setState(() {}),
                   ),
                 ],

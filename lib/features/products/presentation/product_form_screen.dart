@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/auth/auth_providers.dart';
 import '../../../core/auth/role.dart';
+import '../../../core/format/rupiah_input.dart';
 import '../application/product_providers.dart';
 import '../domain/product.dart';
 
@@ -39,7 +40,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final existing = widget.existing;
     _nameController = TextEditingController(text: existing?.name ?? '');
     _skuController = TextEditingController(text: existing?.sku ?? '');
-    _priceController = TextEditingController(text: existing?.price.toString() ?? '');
+    _priceController = TextEditingController(
+      text: existing == null ? '' : formatRupiah(existing.price),
+    );
     _stockController = TextEditingController(text: existing?.stockQty.toString() ?? '0');
     _categoryId = existing?.categoryId;
   }
@@ -82,7 +85,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         id: widget.existing?.id ?? '',
         name: _nameController.text.trim(),
         sku: _skuController.text.trim().isEmpty ? null : _skuController.text.trim(),
-        price: num.parse(_priceController.text),
+        price: parseRupiah(_priceController.text),
         stockQty: int.parse(_stockController.text),
         isActive: true,
         categoryId: _categoryId,
@@ -156,9 +159,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _priceController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'Harga'),
-                validator: (v) => (num.tryParse(v ?? '') == null) ? 'Harga tidak valid' : null,
+                keyboardType: TextInputType.number,
+                inputFormatters: const [RupiahInputFormatter()],
+                decoration: const InputDecoration(labelText: 'Harga', prefixText: 'Rp '),
+                validator: (v) => (v == null || v.trim().isEmpty) ? 'Harga wajib diisi' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
