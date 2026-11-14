@@ -100,7 +100,7 @@ class AdminHomeScreen extends ConsumerWidget {
           const SizedBox(height: 12),
           _ActionCard(
             icon: Icons.wifi_tethering_outlined,
-            title: 'Cek Koneksi Supabase',
+            title: 'Cek Koneksi Server',
             subtitle: 'Diagnostik jaringan & backend',
             onTap: () => Navigator.of(
               context,

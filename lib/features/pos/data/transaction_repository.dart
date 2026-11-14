@@ -12,7 +12,7 @@ class TransactionRepository {
 
   /// Writes the transaction, its items, and the resulting stock movements
   /// atomically to the local Drift DB, decrementing local stock optimistically
-  /// in the same transaction. Never touches Supabase directly — the sync
+  /// in the same transaction. Never touches the server directly — the sync
   /// engine picks up rows with `syncState = 'pending'` and pushes them once
   /// online. This is what makes checkout work with zero connectivity.
   Future<String> checkout({

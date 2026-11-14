@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../../../core/db/app_database.dart';
-import '../../../core/network/supabase_client.dart';
+import '../../../core/network/api_client.dart';
 import '../domain/sales_summary.dart';
 
 typedef _SaleRecord = ({
@@ -14,7 +14,7 @@ typedef _SaleRecord = ({
 
 /// Kasir reports read Drift only -- exactly the sales that cashier made on
 /// this device, which is what makes the report offline-ready. Admin reports
-/// need every cashier's numbers, which only Supabase (source of truth for
+/// need every cashier's numbers, which only the backend (source of truth for
 /// synced data) can answer, so that path requires connectivity.
 class ReportRepository {
   ReportRepository(this._db);
@@ -62,15 +62,13 @@ class ReportRepository {
   }
 
   Future<SalesSummary> adminSummary({required DateTime from, required DateTime to}) async {
-    final rows = await AppSupabase.client
-        .from('transactions')
-        .select(
-          'cashier_id, total_amount, client_created_at, '
-          'cashier:profiles(full_name), '
-          'transaction_items(product_name_snapshot, qty, subtotal)',
-        )
-        .gte('client_created_at', from.toIso8601String())
-        .lt('client_created_at', to.toIso8601String());
+    // from/to are local midnights; send them as UTC instants so the server
+    // filters by the device's day, not the server's (UTC) day.
+    final rows = (await ApiClient.instance.get(
+      '/api/reports/sales',
+      query: {'from': from.toUtc().toIso8601String(), 'to': to.toUtc().toIso8601String()},
+    ) as List)
+        .cast<Map<String, dynamic>>();
 
     if (rows.isEmpty) return SalesSummary.empty;
 

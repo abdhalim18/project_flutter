@@ -22,7 +22,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
   @override
   void initState() {
     super.initState();
-    // Best-effort refresh of the local cache from Supabase; if offline this
+    // Best-effort refresh of the local cache from the server; if offline this
     // fails silently and the screen keeps rendering from Drift.
     Future.microtask(() => ref.read(pullSyncServiceProvider).pullAll().catchError((_) {}));
   }

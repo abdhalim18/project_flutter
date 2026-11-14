@@ -1,9 +1,9 @@
 import 'package:drift/drift.dart';
 
 import '../db/app_database.dart';
-import '../network/supabase_client.dart';
+import '../network/api_client.dart';
 
-/// One-directional pull: Supabase (source of truth) -> local Drift mirror.
+/// One-directional pull: backend (source of truth) -> local Drift mirror.
 /// Phase 3 only reads through this cache; bidirectional sync (outbox, push)
 /// lands in Phase 4/5 for the offline-first POS flow.
 class PullSyncService {
@@ -12,8 +12,10 @@ class PullSyncService {
   final AppDatabase _db;
 
   Future<void> pullAll() async {
-    final categoryRows = await AppSupabase.client.from('categories').select();
-    final productRows = await AppSupabase.client.from('products').select();
+    final categoryRows = (await ApiClient.instance.get('/api/categories') as List)
+        .cast<Map<String, dynamic>>();
+    final productRows = (await ApiClient.instance.get('/api/products') as List)
+        .cast<Map<String, dynamic>>();
 
     await _db.transaction(() async {
       await _db.delete(_db.categories).go();

@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-/// Bridges a Stream (e.g. Supabase auth state changes) into a [Listenable]
+/// Bridges a Stream (e.g. login/logout session changes) into a [Listenable]
 /// so go_router's `refreshListenable` re-evaluates redirects on emission.
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<dynamic> stream) {

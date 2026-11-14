@@ -6,7 +6,7 @@ import 'package:drift/drift.dart';
 /// transactions) that syncs outward in this phase, so a per-row status
 /// column is simpler than a JSON-payload outbox while giving the same
 /// idempotency/retry guarantees (the transaction's own UUID primary key is
-/// the idempotency key for Supabase upserts).
+/// the idempotency key for server-side inserts).
 @DataClassName('TransactionRow')
 class Transactions extends Table {
   TextColumn get id => text()();

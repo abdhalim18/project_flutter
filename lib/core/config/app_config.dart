@@ -5,15 +5,14 @@ class AppConfig {
 
   static Future<void> load() => dotenv.load(fileName: '.env');
 
-  static String get supabaseUrl => _require('SUPABASE_URL');
-
-  static String get supabaseAnonKey => _require('SUPABASE_ANON_KEY');
+  /// URL backend POS (folder backend/, di-deploy ke Neon Functions).
+  static String get apiBaseUrl => _require('API_BASE_URL');
 
   static String _require(String key) {
     final value = dotenv.env[key];
     if (value == null || value.isEmpty) {
       throw StateError(
-        'Missing $key. Copy .env.example to .env and fill in your Supabase project credentials.',
+        'Missing $key. Copy .env.example to .env and fill in the backend URL.',
       );
     }
     return value;

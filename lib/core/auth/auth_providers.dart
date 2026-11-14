@@ -1,13 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../network/api_client.dart';
 import 'auth_repository.dart';
 import 'profile.dart';
 import 'role.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) => AuthRepository());
 
-final authStateChangesProvider = StreamProvider<AuthState>((ref) {
+final authStateChangesProvider = StreamProvider<AppSession?>((ref) {
   return ref.watch(authRepositoryProvider).authStateChanges;
 });
 

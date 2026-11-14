@@ -18,7 +18,7 @@ final syncEngineProvider = Provider<SyncEngine>((ref) {
   return SyncEngine(ref.watch(appDatabaseProvider), ref.watch(pullSyncServiceProvider));
 });
 
-/// Reactive count of transactions still waiting to reach Supabase (either
+/// Reactive count of transactions still waiting to reach the server (either
 /// queued or still within their retry backoff window), shown as a trust
 /// signal in the POS app bar so a cashier can see queued sales haven't
 /// silently vanished.

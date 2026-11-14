@@ -22,7 +22,7 @@ final selectedReportRangeProvider = NotifierProvider<_SelectedRangeNotifier, Rep
 );
 
 /// Kasir sees only their own sales (Drift, offline-ready); admin sees every
-/// cashier's numbers (Supabase, requires connectivity). Both read the same
+/// cashier's numbers (backend, requires connectivity). Both read the same
 /// range selector so the UI stays a single screen.
 final salesSummaryProvider = FutureProvider<SalesSummary>((ref) async {
   final range = ref.watch(selectedReportRangeProvider);

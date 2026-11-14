@@ -1,9 +1,10 @@
--- Seed a starter cafe menu (categories + products) so the app has real
--- content to demo instead of the ad-hoc test product. Photo URLs are
--- deterministic placeholder photos (picsum.photos/seed/...), not real
--- product photography -- admin can replace them later via the product
--- edit screen's photo upload. Safe to re-run: skips rows that already
--- exist by name.
+-- Isi awal database POS, sama dengan seed di supabase/migrations (0007_seed_cafe_menu):
+-- 3 kategori dan 14 produk menu kafe, plus satu akun admin.
+-- Aman dijalankan ulang: baris yang sudah ada (berdasarkan nama/email) dilewati.
+--
+-- Ini hanya menu awal. Data yang ditambahkan di Supabase setelah itu (akun kasir, produk baru,
+-- perubahan stok, transaksi, foto yang diupload) TIDAK ada di sini; untuk itu pakai
+-- npm run db:export lalu npm run db:import.
 
 insert into public.categories (name)
 select v.name
@@ -31,3 +32,32 @@ from (
 ) as v(category_name, name, sku, price, stock_qty, photo_url)
 join public.categories c on c.name = v.category_name
 where not exists (select 1 from public.products p where p.name = v.name);
+
+-- Akun admin. GANTI v_email, v_name, dan v_password di bawah sebelum menjalankan.
+-- Password di-hash bcrypt oleh pgcrypto (format yang sama dengan Supabase), jadi bisa langsung
+-- dipakai login di aplikasi. Bila email sudah ada, akun itu tidak diubah.
+-- Untuk akun kasir, jalankan blok ini lagi dengan v_role := 'kasir', atau pakai
+-- npm run user:create -- kasir@toko.com kasir "Nama Kasir".
+create extension if not exists pgcrypto;
+
+do $seed$
+declare
+  v_email    text := 'admin@toko.com';
+  v_name     text := 'Admin Toko';
+  v_password text := 'GANTI_PASSWORD_INI';
+  v_role     user_role := 'admin';
+  v_id       uuid;
+begin
+  if v_password = 'GANTI_PASSWORD_INI' or length(v_password) < 8 then
+    raise exception 'Ganti v_password di bagian akun admin dulu (minimal 8 karakter). Menu sudah masuk; jalankan ulang setelah diganti.';
+  end if;
+  if exists (select 1 from public.users where lower(email) = lower(v_email)) then
+    raise notice 'Akun % sudah ada, dilewati.', v_email;
+    return;
+  end if;
+  insert into public.users (email, password_hash)
+  values (lower(v_email), crypt(v_password, gen_salt('bf', 10)))
+  returning id into v_id;
+  insert into public.profiles (id, full_name, role) values (v_id, v_name, v_role);
+  raise notice 'Akun % (%) dibuat.', v_email, v_role;
+end $seed$;

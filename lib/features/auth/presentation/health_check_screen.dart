@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../core/network/supabase_client.dart';
+import '../../../core/network/api_client.dart';
 
-/// Any response from Supabase (including "table not found") proves the
-/// client reached the server; only a network-level failure means "offline".
-final supabasePingProvider = FutureProvider<bool>((ref) async {
+/// Any response from the backend (even an error status) proves the app
+/// reached the server; only a network-level failure means "offline".
+final serverPingProvider = FutureProvider<bool>((ref) async {
   try {
-    await AppSupabase.client.from('_health_check_ping').select().limit(1);
+    await ApiClient.instance.get('/api/health');
     return true;
-  } on PostgrestException {
+  } on ApiException {
     return true;
   } catch (_) {
     return false;
@@ -22,14 +21,14 @@ class HealthCheckScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ping = ref.watch(supabasePingProvider);
+    final ping = ref.watch(serverPingProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Aplikasi Penjualan')),
       body: Center(
         child: ping.when(
           data: (ok) => Text(
-            ok ? 'Terhubung ke Supabase ✔' : 'Gagal terhubung ke Supabase',
+            ok ? 'Terhubung ke server ✔' : 'Gagal terhubung ke server',
             style: TextStyle(color: ok ? Colors.green : Colors.red),
           ),
           loading: () => const CircularProgressIndicator(),
