@@ -41,7 +41,7 @@ class AppSession {
   final AppUser user;
 }
 
-/// Klien HTTP ke backend POS (Next.js + Neon), pengganti SupabaseClient.
+/// Klien HTTP ke backend POS (Hono di Neon Functions).
 ///
 /// Menyimpan sesi di secure storage agar tetap login setelah aplikasi ditutup
 /// (termasuk saat offline), dan memancarkan perubahan sesi lewat [sessionChanges]

@@ -1,10 +1,5 @@
--- Isi awal database POS, sama dengan seed di supabase/migrations (0007_seed_cafe_menu):
--- 3 kategori dan 14 produk menu kafe, plus satu akun admin.
+-- Isi awal database POS: 3 kategori dan 14 produk menu kafe, plus satu akun admin.
 -- Aman dijalankan ulang: baris yang sudah ada (berdasarkan nama/email) dilewati.
---
--- Ini hanya menu awal. Data yang ditambahkan di Supabase setelah itu (akun kasir, produk baru,
--- perubahan stok, transaksi, foto yang diupload) TIDAK ada di sini; untuk itu pakai
--- npm run db:export lalu npm run db:import.
 
 insert into public.categories (name)
 select v.name
@@ -34,7 +29,7 @@ join public.categories c on c.name = v.category_name
 where not exists (select 1 from public.products p where p.name = v.name);
 
 -- Akun admin. GANTI v_email, v_name, dan v_password di bawah sebelum menjalankan.
--- Password di-hash bcrypt oleh pgcrypto (format yang sama dengan Supabase), jadi bisa langsung
+-- Password di-hash bcrypt oleh pgcrypto (format yang sama dengan bcryptjs di API), jadi bisa langsung
 -- dipakai login di aplikasi. Bila email sudah ada, akun itu tidak diubah.
 -- Untuk akun kasir, jalankan blok ini lagi dengan v_role := 'kasir', atau pakai
 -- npm run user:create -- kasir@toko.com kasir "Nama Kasir".

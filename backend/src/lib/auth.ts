@@ -28,8 +28,7 @@ export async function signToken(user: { id: string; email: string }): Promise<st
 
 /**
  * Memastikan request membawa token yang valid dan mengembalikan user beserta perannya.
- * Peran dibaca ulang dari tabel profiles di setiap request (sama seperti is_admin() di
- * RLS Supabase), jadi perubahan peran langsung berlaku tanpa login ulang.
+ * Peran dibaca ulang dari tabel profiles di setiap request, jadi perubahan peran langsung berlaku tanpa login ulang.
  */
 export async function requireUser(request: Request, options: { admin?: boolean } = {}): Promise<AuthUser> {
   const header = request.headers.get("authorization") ?? "";

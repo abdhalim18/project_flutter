@@ -12,12 +12,9 @@
     "deploy": "node --env-file=.env.local scripts/deploy.mjs",
     "db:schema": "node --env-file=.env.local scripts/apply-schema.mjs",
     "db:init-sql": "node scripts/build-init-sql.mjs",
-    "db:export": "node --env-file=.env.local scripts/export-supabase.mjs",
-    "db:import": "node --env-file=.env.local scripts/import-export.mjs",
     "user:create": "node --env-file=.env.local scripts/create-user.mjs",
     "menu:art": "node menu-art/generate.mjs",
-    "menu:photos": "node --env-file=.env.local scripts/upload-menu-photos.mjs",
-    "supabase:wipe": "node --env-file=.env.local scripts/wipe-supabase.mjs"
+    "menu:photos": "node --env-file=.env.local scripts/upload-menu-photos.mjs"
   },
   "dependencies": {
     "@neon/config": "^1.14.0",

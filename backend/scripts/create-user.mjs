@@ -1,5 +1,4 @@
-// Membuat akun baru atau mengganti password/peran akun yang sudah ada
-// (pengganti Dashboard → Authentication di Supabase).
+// Membuat akun baru atau mengganti password/peran akun yang sudah ada.
 //
 // Jalankan: npm run user:create -- <email> <admin|kasir> ["Nama Lengkap"]
 // Password diminta lewat prompt (tidak tampil di layar dan tidak tersimpan di riwayat shell).

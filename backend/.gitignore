@@ -35,8 +35,5 @@ next-env.d.ts
 
 !.env.example
 
-# hasil npm run db:export (data bisnis + hash password)
-/exports
-
 # konteks project Neon (dibuat oleh neon link)
 .neon

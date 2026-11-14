@@ -4,19 +4,15 @@
 -- "Akun admin" paling bawah, tempel seluruh file ini, lalu Run. Aman dijalankan ulang.
 --
 -- File ini gabungan db/schema.sql + db/seed.sql (dibuat ulang dengan: npm run db:init-sql).
--- Untuk data asli dari Supabase (akun, transaksi, stok terkini, foto) pakai
--- npm run db:export lalu npm run db:import, bukan file ini.
 -- ============================================================================
 
 -- Skema database POS untuk Neon (Postgres biasa).
 --
--- Diturunkan dari supabase/migrations di repo Flutter (sudah dihapus, ada di riwayat git), dengan perubahan:
---   * auth.users Supabase diganti tabel public.users (email + hash bcrypt).
---     Hash bcrypt dari Supabase bisa dipakai langsung, jadi password lama tetap berlaku.
---   * RLS dihapus: aplikasi tidak lagi terhubung langsung ke database. Semua akses lewat
---     API (src/app/api), dan aturan yang dulu ada di policy RLS sekarang dicek di sana.
---   * Storage Supabase diganti tabel public.photos (foto disimpan sebagai bytea).
---   * Realtime publication dihapus (aplikasi memakai pull sync, bukan realtime).
+--   * Akun disimpan di tabel public.users (email + hash bcrypt).
+--   * Aplikasi tidak terhubung langsung ke database: semua akses lewat API (src/index.ts),
+--     dan aturan akses dicek di sana.
+--   * Foto produk disimpan di tabel public.photos (bytea).
+--   * Aplikasi memakai pull sync, tanpa realtime.
 --
 -- Aman dijalankan ulang: semua objek dibuat dengan "if not exists" / "or replace".
 
@@ -130,7 +126,7 @@ create trigger on_stock_movement_insert
   after insert on public.stock_movements
   for each row execute function public.apply_stock_movement();
 
--- Pengganti bucket Supabase "product-photos".
+-- Foto produk, disajikan lewat GET /api/photos/:id.
 create table if not exists public.photos (
   id uuid primary key default gen_random_uuid(),
   content_type text not null,
@@ -144,13 +140,8 @@ create index if not exists transactions_cashier_id_idx on public.transactions (c
 create index if not exists transaction_items_transaction_id_idx on public.transaction_items (transaction_id);
 create index if not exists stock_movements_product_id_idx on public.stock_movements (product_id);
 
--- Isi awal database POS, sama dengan seed di supabase/migrations (0007_seed_cafe_menu):
--- 3 kategori dan 14 produk menu kafe, plus satu akun admin.
+-- Isi awal database POS: 3 kategori dan 14 produk menu kafe, plus satu akun admin.
 -- Aman dijalankan ulang: baris yang sudah ada (berdasarkan nama/email) dilewati.
---
--- Ini hanya menu awal. Data yang ditambahkan di Supabase setelah itu (akun kasir, produk baru,
--- perubahan stok, transaksi, foto yang diupload) TIDAK ada di sini; untuk itu pakai
--- npm run db:export lalu npm run db:import.
 
 insert into public.categories (name)
 select v.name
@@ -180,7 +171,7 @@ join public.categories c on c.name = v.category_name
 where not exists (select 1 from public.products p where p.name = v.name);
 
 -- Akun admin. GANTI v_email, v_name, dan v_password di bawah sebelum menjalankan.
--- Password di-hash bcrypt oleh pgcrypto (format yang sama dengan Supabase), jadi bisa langsung
+-- Password di-hash bcrypt oleh pgcrypto (format yang sama dengan bcryptjs di API), jadi bisa langsung
 -- dipakai login di aplikasi. Bila email sudah ada, akun itu tidak diubah.
 -- Untuk akun kasir, jalankan blok ini lagi dengan v_role := 'kasir', atau pakai
 -- npm run user:create -- kasir@toko.com kasir "Nama Kasir".

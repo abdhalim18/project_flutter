@@ -1,12 +1,10 @@
 -- Skema database POS untuk Neon (Postgres biasa).
 --
--- Diturunkan dari supabase/migrations di repo Flutter (sudah dihapus, ada di riwayat git), dengan perubahan:
---   * auth.users Supabase diganti tabel public.users (email + hash bcrypt).
---     Hash bcrypt dari Supabase bisa dipakai langsung, jadi password lama tetap berlaku.
---   * RLS dihapus: aplikasi tidak lagi terhubung langsung ke database. Semua akses lewat
---     API (src/app/api), dan aturan yang dulu ada di policy RLS sekarang dicek di sana.
---   * Storage Supabase diganti tabel public.photos (foto disimpan sebagai bytea).
---   * Realtime publication dihapus (aplikasi memakai pull sync, bukan realtime).
+--   * Akun disimpan di tabel public.users (email + hash bcrypt).
+--   * Aplikasi tidak terhubung langsung ke database: semua akses lewat API (src/index.ts),
+--     dan aturan akses dicek di sana.
+--   * Foto produk disimpan di tabel public.photos (bytea).
+--   * Aplikasi memakai pull sync, tanpa realtime.
 --
 -- Aman dijalankan ulang: semua objek dibuat dengan "if not exists" / "or replace".
 
@@ -120,7 +118,7 @@ create trigger on_stock_movement_insert
   after insert on public.stock_movements
   for each row execute function public.apply_stock_movement();
 
--- Pengganti bucket Supabase "product-photos".
+-- Foto produk, disajikan lewat GET /api/photos/:id.
 create table if not exists public.photos (
   id uuid primary key default gen_random_uuid(),
   content_type text not null,

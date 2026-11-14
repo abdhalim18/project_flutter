@@ -171,7 +171,7 @@ app.delete("/api/products/:id", async (c) => {
 });
 
 // ---------------------------------------------------------------------------------------
-// Foto (pengganti bucket Supabase "product-photos")
+// Foto produk
 // ---------------------------------------------------------------------------------------
 
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
@@ -198,7 +198,7 @@ app.post("/api/photos", async (c) => {
 });
 
 /**
- * Publik (seperti bucket Supabase yang public), karena CachedNetworkImage di aplikasi tidak
+ * Publik, karena CachedNetworkImage di aplikasi tidak
  * mengirim token. Isi foto per id tidak pernah berubah, jadi aman di-cache selamanya.
  */
 app.get("/api/photos/:id", async (c) => {
@@ -233,7 +233,7 @@ app.get("/api/photos/:id", async (c) => {
  * retry setelah koneksi putus tidak membuat data ganda dan stok tidak terpotong dua kali
  * (trigger stok hanya jalan untuk baris yang benar-benar baru masuk).
  *
- * Aturan akses sama dengan policy RLS di Supabase dulu:
+ * Aturan akses:
  *   - kasir hanya boleh mengirim transaksi atas namanya sendiri;
  *   - item harus milik transaksi itu;
  *   - pergerakan stok dari kasir harus berupa 'sale' untuk transaksi itu (admin bebas).

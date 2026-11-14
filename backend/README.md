@@ -1,17 +1,12 @@
 # POS API
 
-Backend untuk aplikasi POS Flutter di folder induk ([../](../README.md)), pengganti Supabase.
+Backend untuk aplikasi POS Flutter di folder induk ([../](../README.md)).
 [Hono](https://hono.dev) yang berjalan di [Neon Functions](https://neon.com/docs/compute/functions/overview),
 satu tempat dengan database Postgres-nya di [Neon](https://neon.com). Tidak perlu Vercel atau server lain.
 Kode: [src/index.ts](src/index.ts) (semua endpoint) dan [src/lib/](src/lib/).
 
-| Dulu (Supabase)                           | Sekarang                                             |
-| ----------------------------------------- | ---------------------------------------------------- |
-| Server Supabase                           | Neon Functions (slug `posapi`), region sama dengan database |
-| Supabase Auth                             | `POST /api/auth/login`, token JWT (berlaku 30 hari)  |
-| PostgREST + Row Level Security            | Endpoint REST, aturan akses dicek di setiap endpoint |
-| Storage bucket `product-photos`           | Tabel `photos` (bytea), `GET /api/photos/:id`        |
-| Trigger stok & `needs_review`             | Sama, di [db/schema.sql](db/schema.sql)              |
+Login memakai token JWT (berlaku 30 hari), aturan akses dicek di setiap endpoint, foto produk
+disimpan di tabel `photos`, dan trigger stok & `needs_review` ada di [db/schema.sql](db/schema.sql).
 
 ## Endpoint
 
@@ -56,13 +51,11 @@ npm run user:create -- admin@toko.com admin "Nama Admin"
 
 ## Mengisi database Neon baru lewat SQL Editor
 
-[db/neon-init.sql](db/neon-init.sql) berisi struktur tabel, menu awal (3 kategori, 14 produk,
-sama dengan seed Supabase), dan satu akun admin. Buka Neon Console → SQL Editor, ganti
+[db/neon-init.sql](db/neon-init.sql) berisi struktur tabel, menu awal (3 kategori, 14 produk),
+dan satu akun admin. Buka Neon Console → SQL Editor, ganti
 `v_email`, `v_name`, dan `v_password` di bagian "Akun admin" paling bawah, tempel seluruh isi
 file, lalu Run. Aman dijalankan ulang. File ini dibuat dari `db/schema.sql` + `db/seed.sql`;
 setelah mengubah salah satunya, jalankan `npm run db:init-sql`.
-
-File ini hanya menu awal. Untuk data asli dari Supabase pakai langkah di bawah.
 
 ### Foto menu
 
@@ -76,56 +69,6 @@ npm run menu:photos            # tambahkan -- --dry-run untuk melihat rencananya
 
 Untuk mengubah gambarnya, edit `menu-art/generate.mjs`, jalankan `npm run menu:art` (butuh Google
 Chrome untuk merender), lalu `npm run menu:photos` lagi.
-
-## Pindah dari Supabase ke Neon (sekali saja)
-
-Isi `DATABASE_URL` (Neon) dan `SUPABASE_DB_URL` (Supabase Dashboard → Connect → Session
-pooler) di `.env.local`. Jika project Supabase sedang di-pause, aktifkan dulu (Restore) di
-dashboard. Urutannya:
-
-**1. Export dari Supabase** (hanya membaca, Supabase tidak berubah)
-
-```bash
-npm run db:export
-```
-
-Hasilnya satu file `exports/pos-export-<tanggal>.sql` berisi skema Neon dan semua data: akun
-(password lama tetap berlaku), profil, kategori, produk, transaksi, item, pergerakan stok, dan
-foto produk. File ini juga cadangan kalau suatu saat perlu dipulihkan, jadi simpan salinannya
-di tempat aman (isinya data bisnis dan hash password, jangan dibagikan; folder `exports/` tidak
-ikut di-commit).
-
-**2. Import ke Neon**
-
-```bash
-npm run db:import -- exports/pos-export-<tanggal>.sql
-```
-
-Import berjalan dalam satu transaksi (masuk semua atau tidak sama sekali), lalu jumlah baris
-dan total stok dicocokkan dengan isi file. Bila Neon sudah berisi data, import ditolak; tambah
-`--replace` untuk mengosongkan Neon dan mengimport ulang. File yang sama juga bisa diimport
-tanpa Node: `psql "<url neon>" -v ON_ERROR_STOP=1 -f exports/pos-export-<tanggal>.sql`.
-
-**3. Pindahkan aplikasi:** deploy API ini ke Neon Functions (lihat di bawah), isi `API_BASE_URL` di
-aplikasi Flutter, build APK baru, pasang di semua HP kasir, lalu login dan coba satu transaksi.
-Transaksi offline yang belum terkirim tetap tersimpan di HP dan terkirim ke Neon setelah login.
-
-**4. Hapus data di Supabase**
-
-```bash
-npm run supabase:wipe -- exports/pos-export-<tanggal>.sql        # cek saja, belum menghapus
-npm run supabase:wipe -- exports/pos-export-<tanggal>.sql --yes  # hapus permanen
-```
-
-Script ini menolak menghapus bila ada satu saja akun, produk, transaksi, atau foto di Supabase
-yang belum ada di Neon (misalnya transaksi yang masuk setelah export). Yang dihapus: semua akun
-auth, isi tabel POS, dan file di bucket `product-photos`. Penghapusan file foto butuh
-`SUPABASE_SERVICE_ROLE_KEY` di `.env.local` (Supabase → Settings → API Keys); tanpa itu,
-kosongkan bucket lewat Dashboard → Storage.
-
-Kalau project Supabase itu tidak dipakai untuk hal lain, alternatif yang lebih bersih adalah
-menghapus project-nya (Dashboard → Project Settings → General → Delete project) setelah langkah
-3 selesai. Semua data, foto, dan kuotanya ikut hilang.
 
 ## Deploy ke Neon Functions
 
